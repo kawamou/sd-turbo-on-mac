@@ -1,13 +1,15 @@
+# 動画を読み込みSdTurboインスタンスに渡すコードを下記に記載する
+
 import cv2
 import numpy as np
 from PIL import Image
 from sd_turbo import SdTurbo
 
-prompt = "a photo of elon musk"
+prompt = "a photo of Elon Musk"
 
 negative_prompt = ""
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture("xxx.mov")
 
 img_dst = Image.new("RGB", (1024, 512))
 
@@ -33,6 +35,3 @@ while True:
         cv2.imshow("result", np.array(img_dst))
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
-
-cap.release()
-cv2.destroyAllWindows()
