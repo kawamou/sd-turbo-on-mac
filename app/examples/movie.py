@@ -3,7 +3,8 @@
 import cv2
 import numpy as np
 from PIL import Image
-from sd_turbo import SdTurbo
+
+from ..sd_turbo import SdTurbo
 
 prompt = "a photo of Elon Musk"
 
@@ -33,5 +34,7 @@ while True:
         img_dst.paste(result, (512, 0))
 
         cv2.imshow("result", np.array(img_dst))
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        if cv2.waitKey(100) & 0xFF == ord("q"):
             break
+
+cv2.destroyAllWindows()

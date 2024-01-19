@@ -20,16 +20,20 @@ from PIL import Image
 
 ModelName = Literal["stabilityai/sd-turbo", "stabilityai/sdxl-turbo"]
 
+SD_WIDTH, SD_HEIGHT = 512, 512
+
 
 class SdTurbo:
     def __init__(self, model_name: ModelName):
         device = "cuda" if torch.cuda.is_available() else "mps"
 
         pipe_t2i: StableDiffusionPipeline = AutoPipelineForText2Image.from_pretrained(
-            model_name, torch_dtype=torch.float, variant="fp16"
+            model_name, torch_dtype=torch.float, variant="fp16", use_safetensors=True
         ).to(device)
 
         pipe: StableDiffusionImg2ImgPipeline = AutoPipelineForImage2Image.from_pipe(pipe_t2i)
+
+        pipe.enable_attention_slicing()
 
         if not isinstance(pipe, StableDiffusionImg2ImgPipeline):
             raise Exception("pipe is not StableDiffusionImg2ImgPipeline")
@@ -43,7 +47,7 @@ class SdTurbo:
     def prompt_embeds(self, prompt: str):
         return self.compel_proc(prompt)
 
-    def run(self, prompt: str, negative_prompt: str, image: Union[np.ndarray, Image.Image]):
+    def run(self, prompt: str, negative_prompt: str, image: Union[np.ndarray, Image.Image]) -> Union[Image.Image, None]:
         prompt_embeds = self.prompt_embeds(prompt)
         negative_prompt_embeds = self.prompt_embeds(negative_prompt)
 
@@ -54,7 +58,10 @@ class SdTurbo:
             generator=self.generator,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
+            output_type="pil",
         )
 
         if isinstance(result, StableDiffusionPipelineOutput):
             return result.images[0]
+
+        return None

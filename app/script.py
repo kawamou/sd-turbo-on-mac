@@ -21,8 +21,7 @@ from PIL import Image
 
 device = "cuda" if torch.cuda.is_available() else "mps"
 
-# Elon Muskに顔のみを変換するためのベストなStable Difusionのプロンプトを記述
-prompt = "a photo of elon musk"
+prompt = "a photo of Elon Musk"
 
 negative_prompt = ""
 

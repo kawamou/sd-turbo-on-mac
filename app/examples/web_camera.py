@@ -3,7 +3,8 @@ import time
 import cv2
 import numpy as np
 from PIL import Image
-from sd_turbo import SdTurbo
+
+from ..sd_turbo import SdTurbo
 
 prev_time = time.time()
 
@@ -39,7 +40,7 @@ while True:
         prev_time = curr_time
 
         cv2.imshow("{} fps".format(str(fps)), np.array(img_dst))
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        if cv2.waitKey(30) & 0xFF == ord("q"):
             break
 
 cap.release()
