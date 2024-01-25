@@ -1,4 +1,5 @@
 import time
+from typing import Any, Callable
 
 import cv2
 import numpy as np
@@ -6,42 +7,61 @@ from PIL import Image
 
 from ..sd_turbo import SdTurbo
 
-prev_time = time.time()
+SD_SIDE_LENGTH = 512
 
-prompt = "a photo of Elon Musk"
 
-negative_prompt = ""
+def main():
+    sd_turbo = SdTurbo("stabilityai/sd-turbo")
 
-cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0)
 
-img_dst = Image.new("RGB", (1024, 512))
+    img_dst = Image.new("RGB", (SD_SIDE_LENGTH * 2, SD_SIDE_LENGTH))
 
-sd_turbo = SdTurbo("stabilityai/sd-turbo")
+    while True:
+        try:
+            _, frame = cap.read()
 
-while True:
-    ret, frame = cap.read()
+            init_img = crop_center(Image.fromarray(frame), SD_SIDE_LENGTH * 2, SD_SIDE_LENGTH * 2).resize(
+                (SD_SIDE_LENGTH, SD_SIDE_LENGTH), Image.NEAREST
+            )
 
-    width, height = frame.shape[1], frame.shape[0]
-    left = (width - 1024) // 2
-    top = (height - 1024) // 2
-    right = (width + 1024) // 2
-    bottom = (height + 1024) // 2
+            output_img, fps = timeit(sd_turbo.run)("a photo of Elon Musk", "", init_img)
 
-    img_init = Image.fromarray(frame).crop((left, top, right, bottom)).resize((512, 512), Image.NEAREST)
+            if isinstance(output_img, Image.Image):
+                img_dst.paste(init_img, (0, 0))
+                img_dst.paste(output_img, (SD_SIDE_LENGTH, 0))
 
-    result = sd_turbo.run(prompt, negative_prompt, img_init)
+                cv2.imshow("{} fps".format(fps), np.array(img_dst))
+                cv2.waitKey(1)
 
-    if isinstance(result, Image.Image):
-        img_dst.paste(img_init, (0, 0))
-        img_dst.paste(result, (512, 0))
-
-        curr_time = time.time()
-        fps = 1 / (curr_time - prev_time)
-        prev_time = curr_time
-
-        cv2.imshow("{} fps".format(str(fps)), np.array(img_dst))
-        if cv2.waitKey(30) & 0xFF == ord("q"):
+        except KeyboardInterrupt:
             break
 
-cap.release()
-cv2.destroyAllWindows()
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+def timeit(func: Callable[..., Any]):
+    def wrapper(*args, **kwargs) -> tuple[Image.Image, str]:
+        start = time.time()
+        result = func(*args, **kwargs)
+        elapsed_time = time.time() - start
+        return result, f"{1 / elapsed_time}"
+
+    return wrapper
+
+
+def crop_center(pil_img: Image.Image, crop_width: int, crop_height: int):
+    img_width, img_height = pil_img.size
+    return pil_img.crop(
+        (
+            (img_width - crop_width) // 2,
+            (img_height - crop_height) // 2,
+            (img_width + crop_width) // 2,
+            (img_height + crop_height) // 2,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()
