@@ -25,7 +25,7 @@ SD_WIDTH, SD_HEIGHT = 512, 512
 
 class SdTurbo:
     def __init__(self, model_name: ModelName):
-        device = "cuda" if torch.cuda.is_available() else "mps"
+        device = "mps" if torch.backends.mps.is_available() else "cpu"
 
         pipe_t2i: StableDiffusionPipeline = AutoPipelineForText2Image.from_pretrained(
             model_name, torch_dtype=torch.float, variant="fp16", use_safetensors=True
